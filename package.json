@@ -1,0 +1,60 @@
+{
+  "name": "heatspot",
+  "version": "1.0.0",
+  "description": "A tiny ESM TypeScript library.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc -p tsconfig.build.json",
+    "build:verify": "npm run test && npm run build:harness",
+    "prepublishOnly": "npm run test && npm run build",
+    "pack:check": "npm pack --dry-run",
+    "start": "npm run build && vite --config harness/vite.config.ts",
+    "build:harness": "npm run build && vite build --config harness/vite.config.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:check": "tsc -p tsconfig.json --noEmit",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "heatmap",
+    "lit",
+    "web-components",
+    "typescript",
+    "esm"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "lit": "^3.3.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^25.3.5",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
+    "eslint": "^9.21.0",
+    "eslint-plugin-import": "^2.31.0",
+    "globals": "^16.0.0",
+    "jsdom": "^26.0.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,0 +1,23 @@
+# Exclude development and local-only content from npm package
+
+# VCS and editor
+.git/
+.vscode/
+
+# Dependencies and build intermediates
+node_modules/
+coverage/
+harness-dist/
+
+# Source and local harness (library ships from dist)
+src/
+harness/
+
+# Tooling and test configs
+vitest.config.ts
+tsconfig.json
+tsconfig.build.json
+
+# Local environment files
+*.log
+*.local

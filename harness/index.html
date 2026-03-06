@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heatspot Harness</title>
+    <style>
+      :root {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 1.5rem;
+        background: linear-gradient(165deg, #edf3ff 0%, #f9fbff 100%);
+        color: #10254a;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 820px);
+        justify-content: center;
+        gap: 1.5rem;
+      }
+
+      .toolbar-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid #d7e0f5;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 8px 20px rgba(15, 45, 90, 0.06);
+      }
+
+      .toolbar-controls label {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .panel {
+        min-height: 420px;
+        border-radius: 12px;
+        padding: 1.4rem;
+        box-sizing: border-box;
+        background: #ffffff;
+        border: 1px solid #d7e0f5;
+        box-shadow: 0 12px 30px rgba(15, 45, 90, 0.08);
+      }
+
+      .title {
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+      }
+
+      .copy {
+        margin: 0;
+        opacity: 0.8;
+        line-height: 1.4;
+      }
+
+      .list {
+        margin-top: 0.8rem;
+        padding-left: 1.1rem;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.9rem;
+        margin-top: 1rem;
+      }
+
+      .field {
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .field label {
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      select,
+      textarea {
+        border: 1px solid #bfd0ef;
+        border-radius: 8px;
+        padding: 0.55rem 0.65rem;
+        background: #fbfdff;
+        color: #10254a;
+      }
+
+      textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.25rem;
+      }
+
+      .actions {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.7rem;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.55rem 1rem;
+        cursor: pointer;
+      }
+
+      .primary {
+        background: #1455cc;
+        color: #ffffff;
+      }
+
+      .secondary {
+        background: #eaf1ff;
+        color: #1a3d80;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <div class="toolbar-controls">
+        <label for="toolbar-mode">Heatmap Toolbar</label>
+        <select id="toolbar-mode" name="toolbar-mode">
+          <option value="simple" selected>simple</option>
+          <option value="hidden">hidden</option>
+        </select>
+      </div>
+
+      <heat-map id="demo-heatmap" toolbar="simple">
+        <section class="panel">
+          <h2 class="title">Product Discovery Survey</h2>
+          <p class="copy">Use this mixed-content panel to inspect click clusters around copy, controls, and actions.</p>
+          <ul class="list">
+            <li>Read supporting product context</li>
+            <li>Try inputs with different interaction patterns</li>
+            <li>Submit and compare activity near actions</li>
+          </ul>
+
+          <form class="form-grid">
+            <div class="field">
+              <label for="name">Name</label>
+              <input id="name" name="name" type="text" placeholder="Ada Lovelace" />
+            </div>
+
+            <div class="field">
+              <label for="role">Primary Role</label>
+              <select id="role" name="role">
+                <option>Engineer</option>
+                <option>Designer</option>
+                <option>Product Manager</option>
+                <option>Analyst</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="priority">Feature Priority (1-10)</label>
+              <input id="priority" name="priority" type="range" min="1" max="10" value="6" />
+            </div>
+
+            <div class="field">
+              <label for="feedback">What should improve first?</label>
+              <textarea id="feedback" name="feedback" placeholder="Share a friction point or desired workflow."></textarea>
+            </div>
+          </form>
+
+          <label class="check" for="updates">
+            <input id="updates" name="updates" type="checkbox" />
+            Send me monthly roadmap updates.
+          </label>
+
+          <div class="actions">
+            <button class="primary" type="button">Send Feedback</button>
+            <button class="secondary" type="reset">Clear Form</button>
+          </div>
+        </section>
+      </heat-map>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
