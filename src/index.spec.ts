@@ -89,6 +89,76 @@ describe("mouse heatmap", () => {
     const heatmap = getMouseHeatmapData();
     expect(heatmap.hotspots.length).toBe(1);
   });
+
+  it("uses safe viewport defaults when window is unavailable", () => {
+    const previousWindow = (globalThis as { window?: unknown }).window;
+    delete (globalThis as { window?: unknown }).window;
+
+    try {
+      resetMouseHeatmap();
+      recordMousePosition(10, 15);
+      const heatmap = getMouseHeatmapData();
+
+      expect(heatmap.totalSamples).toBe(0);
+    } finally {
+      if (previousWindow !== undefined) {
+        Object.assign(globalThis as { window?: unknown }, { window: previousWindow });
+      }
+    }
+  });
+
+  it("handles start and stop calls idempotently", () => {
+    let capturedListener: ((event: PointerEvent) => void) | null = null;
+    const fakeWindow = {
+      innerWidth: 640,
+      innerHeight: 480,
+      addEventListener: vi.fn((eventName: string, listener: (event: PointerEvent) => void) => {
+        if (eventName === "pointermove") {
+          capturedListener = listener;
+        }
+      }),
+      removeEventListener: vi.fn()
+    };
+
+    const previousWindow = (globalThis as { window?: unknown }).window;
+    Object.assign(globalThis as { window?: unknown }, { window: fakeWindow });
+
+    try {
+      resetMouseHeatmap();
+
+      startMouseTracking();
+      startMouseTracking();
+      expect(fakeWindow.addEventListener).toHaveBeenCalledTimes(1);
+
+      capturedListener?.({ clientX: 100, clientY: 120 } as PointerEvent);
+      expect(getMouseHeatmapData().totalSamples).toBe(1);
+
+      stopMouseTracking();
+      stopMouseTracking();
+      expect(fakeWindow.removeEventListener).toHaveBeenCalledTimes(1);
+    } finally {
+      if (previousWindow === undefined) {
+        delete (globalThis as { window?: unknown }).window;
+      } else {
+        Object.assign(globalThis as { window?: unknown }, { window: previousWindow });
+      }
+    }
+  });
+
+  it("no-ops tracking lifecycle when window is unavailable", () => {
+    const previousWindow = (globalThis as { window?: unknown }).window;
+    delete (globalThis as { window?: unknown }).window;
+
+    try {
+      startMouseTracking();
+      stopMouseTracking();
+      expect(getMouseHeatmapData()).toBeDefined();
+    } finally {
+      if (previousWindow !== undefined) {
+        Object.assign(globalThis as { window?: unknown }, { window: previousWindow });
+      }
+    }
+  });
 });
 
 describe("hello export", () => {

@@ -82,6 +82,7 @@ resetMouseHeatmap();
 
 - `npm run build` - compile library to `dist/`
 - `npm run test` - run Vitest tests
+- `npm run test:coverage` - run tests with coverage reports in `coverage/`
 - `npm run build:verify` - run tests and harness build
 - `npm run pack:check` - show package contents using `npm pack --dry-run`
 
