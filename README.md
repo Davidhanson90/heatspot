@@ -53,6 +53,10 @@ Example with hidden toolbar:
 </heat-map>
 ```
 
+### Example
+
+![example.jps](assets/example.jpg)
+
 ### 3. Optional tracking API
 
 ```ts
