@@ -17,7 +17,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.build.json",
-    "build:verify": "npm run test && npm run build:harness",
+    "build:verify": "npm run test:coverage && npm run build:harness",
     "prepublishOnly": "npm run test && npm run build",
     "pack:check": "npm pack --dry-run",
     "start": "npm run build && vite --config harness/vite.config.ts",
