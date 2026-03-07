@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "assets/example.jpg"
   ],
   "scripts": {
     "prebuild": "rimraf dist",
