@@ -139,6 +139,80 @@ describe("heat-spot component", () => {
     );
   });
 
+  it("exports a heatmap image data URL through getHeatmapImage", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      getHeatmapImage: (options?: { type?: string; quality?: number }) => string | null;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface");
+    expect(surface).not.toBeNull();
+
+    vi.spyOn(surface as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 220,
+      width: 300,
+      height: 220,
+      toJSON: () => ({})
+    });
+
+    surface?.dispatchEvent(new MouseEvent("pointermove", { bubbles: true, clientX: 40, clientY: 35 }));
+
+    Object.defineProperty(surface as HTMLElement, "clientWidth", { configurable: true, value: 300 });
+    Object.defineProperty(surface as HTMLElement, "clientHeight", { configurable: true, value: 220 });
+
+    const context = { clearRect: vi.fn() } as unknown as CanvasRenderingContext2D;
+    const toDataURL = vi.fn(() => "data:image/png;base64,fake");
+    const fakeCanvas = {
+      width: 0,
+      height: 0,
+      getContext: vi.fn(() => context),
+      toDataURL
+    } as unknown as HTMLCanvasElement;
+
+    const originalCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+      if (tagName.toLowerCase() === "canvas") {
+        return fakeCanvas;
+      }
+
+      return originalCreateElement(tagName);
+    });
+
+    const renderSpy = vi.spyOn(renderer, "renderHeatmapOverlay").mockImplementation(() => {});
+
+    const image = element.getHeatmapImage();
+
+    expect(image).toBe("data:image/png;base64,fake");
+    expect(renderSpy).toHaveBeenCalledWith(context, 300, 220, expect.any(Array));
+    expect(toDataURL).toHaveBeenCalledWith("image/png", undefined);
+  });
+
+  it("returns null from getHeatmapImage when surface size is not measurable", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      getHeatmapImage: () => string | null;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface");
+    expect(surface).not.toBeNull();
+
+    Object.defineProperty(surface as HTMLElement, "clientWidth", { configurable: true, value: 0 });
+    Object.defineProperty(surface as HTMLElement, "clientHeight", { configurable: true, value: 0 });
+
+    expect(element.getHeatmapImage()).toBeNull();
+  });
+
   it("normalizes unsupported toolbar values", async () => {
     const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;

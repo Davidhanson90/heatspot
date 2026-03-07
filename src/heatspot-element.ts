@@ -83,6 +83,35 @@ export class HeatSpotElement extends LitElement {
   }
 
   /**
+   * Renders the current heatmap visualization into an image data URL.
+   */
+  getHeatmapImage(options: { type?: string; quality?: number } = {}): string | null {
+    const surface = this.renderRoot.querySelector<HTMLElement>(".surface");
+    if (!surface) {
+      return null;
+    }
+
+    const width = Math.round(surface.clientWidth);
+    const height = Math.round(surface.clientHeight);
+    if (width <= 0 || height <= 0) {
+      return null;
+    }
+
+    const imageCanvas = document.createElement("canvas");
+    imageCanvas.width = width;
+    imageCanvas.height = height;
+    const context = imageCanvas.getContext("2d");
+    if (!context) {
+      return null;
+    }
+
+    const snapshot = this.tracker.getSnapshot();
+    renderHeatmapOverlay(context, width, height, snapshot.hotspots);
+
+    return imageCanvas.toDataURL(options.type ?? "image/png", options.quality);
+  }
+
+  /**
    * Stops frame rendering when element leaves the document.
    */
   disconnectedCallback(): void {

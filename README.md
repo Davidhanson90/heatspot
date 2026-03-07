@@ -120,6 +120,33 @@ stopMouseTracking();
 resetMouseHeatmap();
 ```
 
+### 5. Export the heatmap visualization as an image
+
+```ts
+const element = document.querySelector<HeatSpotElement>("heat-spot");
+
+if (element) {
+  const imageDataUrl = element.getHeatmapImage();
+
+  if (imageDataUrl) {
+    console.log(imageDataUrl);
+    // Example prefix:
+    // data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+
+    // Optional download example
+    const link = document.createElement("a");
+    link.href = imageDataUrl;
+    link.download = "heatmap.png";
+    link.click();
+  }
+}
+```
+
+`getHeatmapImage()` returns:
+
+- A `data:` URL string when the component has measurable dimensions.
+- `null` if the element has no measurable surface yet (for example, hidden or not laid out).
+
 ## Scripts
 
 - `npm run build` - compile library to `dist/`

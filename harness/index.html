@@ -26,12 +26,19 @@
       .toolbar-controls {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 0.6rem;
         padding: 0.8rem 1rem;
         border: 1px solid #d7e0f5;
         border-radius: 10px;
         background: #ffffff;
         box-shadow: 0 8px 20px rgba(15, 45, 90, 0.06);
+      }
+
+      .download-controls {
+        margin-left: auto;
+        display: flex;
+        gap: 0.5rem;
       }
 
       .toolbar-controls label {
@@ -133,6 +140,12 @@
         background: #eaf1ff;
         color: #1a3d80;
       }
+
+      .download {
+        background: #11346f;
+        color: #ffffff;
+        padding-inline: 0.85rem;
+      }
     </style>
   </head>
   <body>
@@ -143,6 +156,11 @@
           <option value="simple" selected>simple</option>
           <option value="hidden">hidden</option>
         </select>
+
+        <div class="download-controls">
+          <button id="download-data" class="download" type="button">Download Data</button>
+          <button id="download-image" class="download" type="button">Download Image</button>
+        </div>
       </div>
 
       <heat-spot id="demo-heatmap" toolbar="simple">
