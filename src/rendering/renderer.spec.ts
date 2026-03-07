@@ -113,7 +113,11 @@ describe("heatmap renderer utilities", () => {
       context,
       16,
       12,
-      [{ x: 8, y: 6, count: 5 }],
+      [{
+        x: 8, y: 6, count: 5,
+        id: "",
+        intensity: 0
+      }],
       { sampleStep: 4, maxContourRadius: 18 }
     );
 
@@ -148,7 +152,11 @@ describe("heatmap renderer utilities", () => {
     const createElement = vi.fn(() => fakeCanvas);
     vi.stubGlobal("document", { createElement });
 
-    renderHeatmapOverlay(context, 10, 10, [{ x: 5, y: 5, count: 2 }], { sampleStep: 5 });
+    renderHeatmapOverlay(context, 10, 10, [{
+      x: 5, y: 5, count: 2,
+      id: "",
+      intensity: 0
+    }], { sampleStep: 5 });
 
     expect(drawImage).not.toHaveBeenCalled();
   });

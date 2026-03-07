@@ -16,7 +16,7 @@ export const MIN_MERGE_RADIUS = 4;
 export const MIN_MAX_HOTSPOTS = 20;
 
 /**
- * Tracker configuration used by the `heat-map` web component instance.
+ * Tracker configuration used by the `heat-spot` web component instance.
  */
 export const ELEMENT_TRACKER_CONFIG: HeatmapConfig = {
   mergeRadius: 24,

@@ -6,7 +6,7 @@
 
 - ESM package output with TypeScript declarations
 - Pointer heat tracking utility API
-- Reusable `<heat-map>` component with slot-based content
+- Reusable `<heat-spot>` component with slot-based content
 - Built-in toggle icon (top-left) to show heat overlay
 - Configurable `toolbar` attribute: `simple` (default) or `hidden`
 
@@ -24,17 +24,17 @@ npm install heatspot
 import "heatspot";
 ```
 
-The `heat-map` custom element is registered on import.
+The `heat-spot` custom element is registered on import.
 
 ### 2. Render the component
 
 ```html
-<heat-map toolbar="simple">
+<heat-spot toolbar="simple">
   <section>
     <h2>Example Panel</h2>
     <p>Move the mouse over this area, then click the icon in the top-left.</p>
   </section>
-</heat-map>
+</heat-spot>
 ```
 
 `toolbar` options:
@@ -45,12 +45,12 @@ The `heat-map` custom element is registered on import.
 Example with hidden toolbar:
 
 ```html
-<heat-map toolbar="hidden">
+<heat-spot toolbar="hidden">
   <section>
     <h2>Passive Tracking Panel</h2>
     <p>The heatmap toggle icon is not rendered in this mode.</p>
   </section>
-</heat-map>
+</heat-spot>
 ```
 
 ### Example

@@ -5,7 +5,7 @@ import { ELEMENT_TRACKER_CONFIG } from "./constants/constants.js";
 import { type HeatmapToolbarMode } from "./contracts/heatmap-contracts.js";
 import { renderHeatmapOverlay } from "./rendering/renderer.js";
 
-export class HeatMapElement extends LitElement {
+export class HeatSpotElement extends LitElement {
   static properties = {
     heatmapVisible: { state: true },
     toolbar: { type: String, reflect: true }
@@ -202,6 +202,6 @@ export class HeatMapElement extends LitElement {
   }
 }
 
-if (typeof customElements !== "undefined" && !customElements.get("heat-map")) {
-  customElements.define("heat-map", HeatMapElement);
+if (typeof customElements !== "undefined" && !customElements.get("heat-spot")) {
+  customElements.define("heat-spot", HeatSpotElement);
 }

@@ -1,6 +1,6 @@
 {
   "name": "heatspot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A tiny ESM TypeScript library.",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,8 +17,8 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.build.json",
-    "build:verify": "npm run test:coverage && npm run build:harness",
-    "prepublishOnly": "npm run test && npm run build",
+    "build:verify": "npm run test:coverage && npm run lint && npm run build:harness && npm run test:check",
+    "prepublishOnly": "npm run build:verify && npm run test && npm run build",
     "pack:check": "npm pack --dry-run",
     "start": "npm run build && vite --config harness/vite.config.ts",
     "build:harness": "npm run build && vite build --config harness/vite.config.ts",

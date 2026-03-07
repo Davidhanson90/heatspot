@@ -2,10 +2,10 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import "./heatmap-element.js";
+import "./heatspot-element.js";
 import * as renderer from "./rendering/renderer.js";
 
-describe("heat-map component", () => {
+describe("heat-spot component", () => {
   afterEach(() => {
     document.body.innerHTML = "";
     vi.restoreAllMocks();
@@ -20,7 +20,7 @@ describe("heat-map component", () => {
     const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
 
     try {
-      const element = document.createElement("heat-map") as HTMLElement & {
+      const element = document.createElement("heat-spot") as HTMLElement & {
         updateComplete: Promise<unknown>;
       };
 
@@ -48,7 +48,7 @@ describe("heat-map component", () => {
   });
 
   it("hides the heatmap icon when toolbar is hidden", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
     };
 
@@ -61,7 +61,7 @@ describe("heat-map component", () => {
   });
 
   it("records pointer movement while hidden", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       tracker: {
         getSnapshot: () => { totalSamples: number };
@@ -93,7 +93,7 @@ describe("heat-map component", () => {
   });
 
   it("normalizes unsupported toolbar values", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       toolbar: string;
     };
@@ -110,7 +110,7 @@ describe("heat-map component", () => {
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation(() => 1);
 
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       tracker: { getSnapshot: () => { totalSamples: number } };
     };
@@ -136,7 +136,7 @@ describe("heat-map component", () => {
   });
 
   it("ignores pointer tracking when surface has no measurable area", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       tracker: { getSnapshot: () => { totalSamples: number } };
     };
@@ -165,7 +165,7 @@ describe("heat-map component", () => {
   });
 
   it("clamps tracked coordinates to the surface bounds", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       tracker: { getSnapshot: () => { hotspots: Array<{ x: number; y: number }> } };
     };
@@ -206,7 +206,7 @@ describe("heat-map component", () => {
     });
     const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
 
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       heatmapVisible: boolean;
       drawLoopId: number | null;
@@ -238,7 +238,7 @@ describe("heat-map component", () => {
   it("stops draw loop when disconnected", async () => {
     const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
 
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       drawLoopId: number | null;
       disconnectedCallback: () => void;
     };
@@ -252,7 +252,7 @@ describe("heat-map component", () => {
   });
 
   it("returns early when drawHeatmap cannot access required render targets", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       drawHeatmap: () => void;
       renderRoot: ShadowRoot;
@@ -268,7 +268,7 @@ describe("heat-map component", () => {
   });
 
   it("returns early when pointer move cannot find the surface element", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       renderRoot: ShadowRoot;
       onPointerMove: (event: PointerEvent) => void;
@@ -290,7 +290,7 @@ describe("heat-map component", () => {
   });
 
   it("returns early when drawHeatmap surface dimensions are non-positive", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       drawHeatmap: () => void;
       renderRoot: ShadowRoot;
@@ -319,7 +319,7 @@ describe("heat-map component", () => {
   });
 
   it("returns early when canvas context is unavailable", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       drawHeatmap: () => void;
       renderRoot: ShadowRoot;
@@ -350,7 +350,7 @@ describe("heat-map component", () => {
   });
 
   it("renders heatmap overlay when surface and context are available", async () => {
-    const element = document.createElement("heat-map") as HTMLElement & {
+    const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       drawHeatmap: () => void;
       renderRoot: ShadowRoot;

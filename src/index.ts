@@ -2,12 +2,12 @@ import {
   HeatmapTracker
 } from "./core/heatmap-tracker.js";
 import { DEFAULT_HEATMAP_CONFIG } from "./constants/constants.js";
-import { HeatMapElement } from "./heatmap-element.js";
+import { HeatSpotElement } from "./heatspot-element.js";
 import { type HeatmapConfig, type HeatmapSnapshot, type ViewportSize } from "./contracts/heatmap-contracts.js";
 
 export const hello = "hello";
 
-export { HeatMapElement };
+export { HeatSpotElement };
 export { DEFAULT_HEATMAP_CONFIG, HeatmapTracker };
 export type {
   HeatmapConfig,

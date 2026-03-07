@@ -108,7 +108,7 @@ describe("mouse heatmap", () => {
   });
 
   it("handles start and stop calls idempotently", () => {
-    let capturedListener: ((event: PointerEvent) => void) | null = null;
+    let capturedListener: (event: PointerEvent) => void = () => undefined;
     const fakeWindow = {
       innerWidth: 640,
       innerHeight: 480,
@@ -130,7 +130,7 @@ describe("mouse heatmap", () => {
       startMouseTracking();
       expect(fakeWindow.addEventListener).toHaveBeenCalledTimes(1);
 
-      capturedListener?.({ clientX: 100, clientY: 120 } as PointerEvent);
+      capturedListener({ clientX: 100, clientY: 120 } as PointerEvent);
       expect(getMouseHeatmapData().totalSamples).toBe(1);
 
       stopMouseTracking();
