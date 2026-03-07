@@ -8,6 +8,28 @@
 
 `heatspot` is an ESM TypeScript library for capturing pointer heat data and rendering an embeddable heatmap web component.
 
+## Try the Demo
+
+Live demo:
+
+- [![heatspot demo](https://raw.githubusercontent.com/Davidhanson90/heatspot/main/assets/example.jpg)](https://davidhanson90.github.io/heatspot/)
+
+How to try it:
+
+1. Open the demo URL.
+2. Move your cursor around the demo area for a few seconds.
+3. Click the toggle icon in the top-left of the component to show the heat overlay.
+4. Continue interacting to see hotspots update in real time.
+
+To run the demo locally:
+
+```bash
+npm install
+npm start
+```
+
+Then open the local URL shown in your terminal (Vite default is usually `http://localhost:5173`).
+
 ## Features
 
 - ESM package output with TypeScript declarations
@@ -58,10 +80,6 @@ Example with hidden toolbar:
   </section>
 </heat-spot>
 ```
-
-### Example
-
-![example.jpg](https://raw.githubusercontent.com/Davidhanson90/heatspot/main/assets/example.jpg)
 
 ### 3. Read heatmap data from a `<heat-spot>` element
 
