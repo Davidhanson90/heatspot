@@ -2,7 +2,7 @@ import { LitElement, css, html } from "lit";
 
 import { HeatmapTracker } from "./core/heatmap-tracker.js";
 import { ELEMENT_TRACKER_CONFIG } from "./constants/constants.js";
-import { type HeatmapToolbarMode } from "./contracts/heatmap-contracts.js";
+import { type HeatmapSnapshot, type HeatmapToolbarMode } from "./contracts/heatmap-contracts.js";
 import { renderHeatmapOverlay } from "./rendering/renderer.js";
 
 export class HeatSpotElement extends LitElement {
@@ -73,6 +73,13 @@ export class HeatSpotElement extends LitElement {
     super();
     this.heatmapVisible = false;
     this.toolbar = "simple";
+  }
+
+  /**
+   * Returns the current tracked heatmap snapshot for this element instance.
+   */
+  getHeatmapData(): HeatmapSnapshot {
+    return this.tracker.getSnapshot();
   }
 
   /**

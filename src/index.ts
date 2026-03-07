@@ -17,6 +17,7 @@ export type {
   ViewportSize
 } from "./contracts/heatmap-contracts.js";
 
+
 const globalTracker = new HeatmapTracker(DEFAULT_HEATMAP_CONFIG);
 let moveListener: ((event: PointerEvent) => void) | null = null;
 

@@ -63,7 +63,43 @@ Example with hidden toolbar:
 
 ![example.jpg](https://raw.githubusercontent.com/Davidhanson90/heatspot/main/assets/example.jpg)
 
-### 3. Optional tracking API
+### 3. Read heatmap data from a `<heat-spot>` element
+
+```ts
+const element = document.querySelector<HeatSpotElement>('heat-spot');
+
+const snapshot = element.getHeatmapData();
+
+console.log(snapshot);
+```
+
+Example data shape:
+
+```json
+{
+  "totalSamples": 42,
+  "trackedSince": 1741351200000,
+  "viewport": { "width": 960, "height": 540 },
+  "hotspots": [
+    {
+      "id": "hs-0",
+      "x": 418.2,
+      "y": 225.6,
+      "count": 18,
+      "intensity": 1
+    },
+    {
+      "id": "hs-1",
+      "x": 701.1,
+      "y": 392.8,
+      "count": 9,
+      "intensity": 0.5
+    }
+  ]
+}
+```
+
+### 4. Optional global tracking API
 
 ```ts
 import {

@@ -92,6 +92,53 @@ describe("heat-spot component", () => {
     element.remove();
   });
 
+  it("exposes heatmap snapshot data through getHeatmapData", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      getHeatmapData: () => {
+        totalSamples: number;
+        trackedSince: number | null;
+        viewport: { width: number; height: number };
+        hotspots: Array<{ id: string; x: number; y: number; count: number; intensity: number }>;
+      };
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface");
+    expect(surface).not.toBeNull();
+
+    vi.spyOn(surface as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 220,
+      width: 300,
+      height: 220,
+      toJSON: () => ({})
+    });
+
+    surface?.dispatchEvent(new MouseEvent("pointermove", { bubbles: true, clientX: 40, clientY: 35 }));
+
+    const snapshot = element.getHeatmapData();
+    expect(snapshot.totalSamples).toBe(1);
+    expect(snapshot.trackedSince).not.toBeNull();
+    expect(snapshot.viewport).toEqual({ width: 300, height: 220 });
+    expect(snapshot.hotspots.length).toBe(1);
+    expect(snapshot.hotspots[0]).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        x: 40,
+        y: 35,
+        count: 1,
+        intensity: 1
+      })
+    );
+  });
+
   it("normalizes unsupported toolbar values", async () => {
     const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
