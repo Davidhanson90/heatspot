@@ -1,5 +1,12 @@
 # heatspot
 
+[![npm version](https://img.shields.io/npm/v/heatspot.svg)](https://www.npmjs.com/package/heatspot)
+[![npm downloads](https://img.shields.io/npm/dm/heatspot.svg)](https://www.npmjs.com/package/heatspot)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-%233178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![license](https://img.shields.io/github/license/Davidhanson90/heatspot.svg)](LICENSE)
+[![verify](https://github.com/Davidhanson90/heatspot/actions/workflows/verify-main.yml/badge.svg)](https://github.com/Davidhanson90/heatspot/actions/workflows/verify-main.yml)
+[![publish](https://github.com/Davidhanson90/heatspot/actions/workflows/publish-npm.yml/badge.svg)](https://github.com/Davidhanson90/heatspot/actions/workflows/publish-npm.yml)
+
 `heatspot` is an ESM TypeScript library for capturing pointer heat data and rendering an embeddable heatmap web component.
 
 ## Features
