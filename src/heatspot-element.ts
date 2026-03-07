@@ -49,14 +49,22 @@ export class HeatSpotElement extends LitElement {
       color: #ffffff;
       padding: 0;
       line-height: 1;
-      font-size: 0.92rem;
-      font-weight: 700;
       cursor: pointer;
       z-index: 10001;
+      opacity: 0.72;
+      transition: opacity 180ms ease;
+      display: grid;
+      place-items: center;
     }
 
     .toggle:hover {
-      background: rgba(2, 6, 23, 0.95);
+      opacity: 1;
+    }
+
+    .toggle-icon {
+      width: 0.95rem;
+      height: 0.95rem;
+      fill: currentColor;
     }
 
     .overlay {
@@ -231,7 +239,17 @@ export class HeatSpotElement extends LitElement {
       ${this.toolbar === "hidden"
         ? null
         : html`<button class="toggle" @click=${this.toggleHeatmap} aria-label="Toggle heatmap">
-            ${this.heatmapVisible ? "x" : "*"}
+            <svg
+              class="toggle-icon"
+              viewBox="0 0 24 24"
+              role="img"
+              aria-label="Heatmap fire icon"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2.5c.4 2.3-.2 3.9-1.3 5.3-1.2 1.5-2.6 2.9-2.6 5.3 0 2.2 1.8 4 3.9 4 .8 0 1.6-.2 2.2-.6-1.1-.4-1.9-1.5-1.9-2.8 0-1.9 1.6-3 2.7-4.4.8-1 .9-2.1.8-3.3 2.3 1.5 4.2 4 4.2 7.1 0 4.2-3.4 7.6-7.6 7.6S4.8 17.3 4.8 13.1c0-4.3 2.5-6.7 4.5-8.7C10.4 3.3 11.2 2.6 12 2.5z"
+              />
+            </svg>
           </button>`}
       ${this.heatmapVisible ? html`<canvas id="heatmap" class="overlay"></canvas>` : null}
     `;
