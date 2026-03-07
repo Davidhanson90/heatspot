@@ -1,6 +1,6 @@
 {
   "name": "heatspot",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A tiny ESM TypeScript library.",
   "type": "module",
   "main": "./dist/index.js",
