@@ -61,7 +61,7 @@ Example with hidden toolbar:
 
 ### Example
 
-![example.jps](assets/example.jpg)
+![example.jpg](https://raw.githubusercontent.com/Davidhanson90/heatspot/main/assets/example.jpg)
 
 ### 3. Optional tracking API
 
