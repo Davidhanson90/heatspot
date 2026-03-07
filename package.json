@@ -37,6 +37,10 @@
     "typescript",
     "esm"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Davidhanson90/heatspot.git"
+  },
   "author": "",
   "license": "MIT",
   "engines": {
