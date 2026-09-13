@@ -41,4 +41,74 @@ describe("HeatmapTracker", () => {
     expect(snapshot.hotspots).toEqual([]);
     expect(snapshot.trackedSince).toBeNull();
   });
+
+  it("stores positions as normalized coordinates and remaps them to the current viewport", () => {
+    const tracker = new HeatmapTracker();
+
+    tracker.recordPosition(25, 10, { width: 100, height: 50 });
+    tracker.updateViewport({ width: 200, height: 100 });
+
+    const snapshot = tracker.getSnapshot();
+
+    expect(snapshot.viewport).toEqual({ width: 200, height: 100 });
+    expect(snapshot.hotspots).toHaveLength(1);
+    expect(snapshot.hotspots[0].x).toBeCloseTo(50);
+    expect(snapshot.hotspots[0].y).toBeCloseTo(20);
+  });
+
+  it("ignores invalid viewports for both recording and updates", () => {
+    const tracker = new HeatmapTracker();
+
+    tracker.recordPosition(10, 10, { width: 0, height: 100 });
+    tracker.recordPosition(10, 10, { width: 100, height: 50 });
+    tracker.updateViewport({ width: 0, height: 80 });
+    tracker.updateViewport({ width: 80, height: 0 });
+
+    const snapshot = tracker.getSnapshot();
+
+    expect(snapshot.totalSamples).toBe(1);
+    expect(snapshot.viewport).toEqual({ width: 100, height: 50 });
+    expect(snapshot.hotspots[0].x).toBeCloseTo(10);
+    expect(snapshot.hotspots[0].y).toBeCloseTo(10);
+  });
+
+  it("records weighted samples as multiple counts at the same point", () => {
+    const tracker = new HeatmapTracker();
+
+    tracker.recordPosition(40, 20, { width: 200, height: 100 }, 3);
+
+    const snapshot = tracker.getSnapshot();
+
+    expect(snapshot.totalSamples).toBe(3);
+    expect(snapshot.hotspots).toHaveLength(1);
+    expect(snapshot.hotspots[0].count).toBe(3);
+    expect(snapshot.hotspots[0].x).toBeCloseTo(40);
+    expect(snapshot.hotspots[0].y).toBeCloseTo(20);
+  });
+
+  it("treats non-positive or non-finite weight as a single sample", () => {
+    const tracker = new HeatmapTracker();
+
+    tracker.recordPosition(10, 10, { width: 100, height: 100 }, 0);
+    tracker.recordPosition(10, 10, { width: 100, height: 100 }, Number.NaN);
+    tracker.recordPosition(80, 80, { width: 100, height: 100 }, Number.NEGATIVE_INFINITY);
+
+    const snapshot = tracker.getSnapshot();
+
+    expect(snapshot.totalSamples).toBe(3);
+    expect(snapshot.hotspots[0].count).toBeGreaterThanOrEqual(1);
+  });
+
+  it("merges a weighted sample into the nearest hotspot", () => {
+    const tracker = new HeatmapTracker({ mergeRadius: 24 });
+
+    tracker.recordPosition(100, 100, { width: 400, height: 400 });
+    tracker.recordPosition(104, 101, { width: 400, height: 400 }, 2);
+
+    const snapshot = tracker.getSnapshot();
+
+    expect(snapshot.hotspots).toHaveLength(1);
+    expect(snapshot.hotspots[0].count).toBe(3);
+    expect(snapshot.totalSamples).toBe(3);
+  });
 });

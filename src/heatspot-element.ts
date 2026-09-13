@@ -1,7 +1,7 @@
 import { LitElement, css, html } from "lit";
 
 import { HeatmapTracker } from "./core/heatmap-tracker.js";
-import { ELEMENT_TRACKER_CONFIG } from "./constants/constants.js";
+import { CLICK_SAMPLE_WEIGHT, ELEMENT_TRACKER_CONFIG } from "./constants/constants.js";
 import { type HeatmapSnapshot, type HeatmapToolbarMode } from "./contracts/heatmap-contracts.js";
 import { renderHeatmapOverlay } from "./rendering/renderer.js";
 
@@ -14,7 +14,11 @@ export class HeatSpotElement extends LitElement {
   declare private heatmapVisible: boolean;
   declare private toolbar: HeatmapToolbarMode;
 
-  private drawLoopId: number | null = null;
+  private needsDraw = false;
+
+  private drawFrameId: number | null = null;
+
+  private resizeObserver: ResizeObserver | null = null;
 
   private readonly tracker = new HeatmapTracker(ELEMENT_TRACKER_CONFIG);
 
@@ -119,16 +123,30 @@ export class HeatSpotElement extends LitElement {
     return imageCanvas.toDataURL(options.type ?? "image/png", options.quality);
   }
 
-  /**
-   * Stops frame rendering when element leaves the document.
-   */
-  disconnectedCallback(): void {
-    this.stopDrawLoop();
-    super.disconnectedCallback();
+  connectedCallback(): void {
+    super.connectedCallback();
+    void this.updateComplete.then(() => {
+      if (this.isConnected) {
+        this.ensureResizeObserver();
+      }
+    });
   }
 
   /**
-   * Starts or stops rendering based on the overlay visibility.
+   * Stops scheduled rendering and resize observation when the element leaves the document.
+   */
+  disconnectedCallback(): void {
+    this.cancelScheduledDraw();
+    this.teardownResizeObserver();
+    super.disconnectedCallback();
+  }
+
+  protected firstUpdated(): void {
+    this.ensureResizeObserver();
+  }
+
+  /**
+   * Starts a single draw when the overlay becomes visible.
    */
   updated(): void {
     if (this.toolbar !== "simple" && this.toolbar !== "hidden") {
@@ -136,11 +154,12 @@ export class HeatSpotElement extends LitElement {
     }
 
     if (this.heatmapVisible) {
-      this.startDrawLoop();
+      this.needsDraw = true;
+      this.scheduleDraw();
       return;
     }
 
-    this.stopDrawLoop();
+    this.cancelScheduledDraw();
   }
 
   /**
@@ -151,13 +170,27 @@ export class HeatSpotElement extends LitElement {
   }
 
   /**
-   * Tracks pointer motion while overlay is hidden.
+   * Tracks pointer motion, including while the overlay is visible.
    */
   private onPointerMove(event: PointerEvent): void {
-    if (this.heatmapVisible) {
+    this.recordPointerEvent(event);
+  }
+
+  /**
+   * Records a weighted sample for a primary click or tap.
+   */
+  private onPointerDown(event: PointerEvent): void {
+    if (event.button !== 0) {
       return;
     }
 
+    this.recordPointerEvent(event, CLICK_SAMPLE_WEIGHT);
+  }
+
+  /**
+   * Converts a pointer event into a tracker sample in surface coordinates.
+   */
+  private recordPointerEvent(event: PointerEvent, weight = 1): void {
     const surface = this.renderRoot.querySelector<HTMLElement>(".surface");
     if (!surface) {
       return;
@@ -170,35 +203,83 @@ export class HeatSpotElement extends LitElement {
 
     const x = Math.min(rect.width, Math.max(0, event.clientX - rect.left));
     const y = Math.min(rect.height, Math.max(0, event.clientY - rect.top));
-    this.tracker.recordPosition(x, y, { width: rect.width, height: rect.height });
+    this.tracker.recordPosition(x, y, { width: rect.width, height: rect.height }, weight);
+    this.needsDraw = true;
+    this.scheduleDraw();
   }
 
   /**
-   * Creates a requestAnimationFrame loop for continuous heatmap drawing.
+   * Observes the surface so stored hotspots remap when the element resizes.
    */
-  private startDrawLoop(): void {
-    if (this.drawLoopId !== null) {
+  private ensureResizeObserver(): void {
+    if (this.resizeObserver || typeof ResizeObserver === "undefined") {
       return;
     }
 
-    const drawFrame = () => {
+    const surface = this.renderRoot.querySelector<HTMLElement>(".surface");
+    if (!surface) {
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.onSurfaceResize();
+    });
+    this.resizeObserver.observe(surface);
+  }
+
+  /**
+   * Updates the tracker viewport from the current surface size and redraws if needed.
+   */
+  private onSurfaceResize(): void {
+    const surface = this.renderRoot.querySelector<HTMLElement>(".surface");
+    if (!surface) {
+      return;
+    }
+
+    const rect = surface.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+
+    this.tracker.updateViewport({ width: rect.width, height: rect.height });
+    this.needsDraw = true;
+    this.scheduleDraw();
+  }
+
+  private teardownResizeObserver(): void {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+  }
+
+  /**
+   * Requests one animation frame to draw when the overlay is visible and dirty.
+   */
+  private scheduleDraw(): void {
+    if (!this.heatmapVisible || this.drawFrameId !== null) {
+      return;
+    }
+
+    this.drawFrameId = window.requestAnimationFrame(() => {
+      this.drawFrameId = null;
+      if (!this.needsDraw || !this.heatmapVisible) {
+        return;
+      }
+
+      this.needsDraw = false;
       this.drawHeatmap();
-      this.drawLoopId = window.requestAnimationFrame(drawFrame);
-    };
-
-    this.drawLoopId = window.requestAnimationFrame(drawFrame);
+    });
   }
 
   /**
-   * Stops the active requestAnimationFrame drawing loop.
+   * Cancels a pending draw frame, if any.
    */
-  private stopDrawLoop(): void {
-    if (this.drawLoopId === null) {
+  private cancelScheduledDraw(): void {
+    if (this.drawFrameId === null) {
       return;
     }
 
-    window.cancelAnimationFrame(this.drawLoopId);
-    this.drawLoopId = null;
+    window.cancelAnimationFrame(this.drawFrameId);
+    this.drawFrameId = null;
   }
 
   /**
@@ -233,7 +314,7 @@ export class HeatSpotElement extends LitElement {
 
   render() {
     return html`
-      <div class="surface" @pointermove=${this.onPointerMove}>
+      <div class="surface" @pointermove=${this.onPointerMove} @pointerdown=${this.onPointerDown}>
         <slot></slot>
       </div>
       ${this.toolbar === "hidden"

@@ -19,7 +19,7 @@ How to try it:
 1. Open the demo URL.
 2. Move your cursor around the demo area for a few seconds.
 3. Click the toggle icon in the top-left of the component to show the heat overlay.
-4. Continue interacting to see hotspots update in real time.
+4. Continue moving and clicking — tracking stays on while the overlay is visible, and hotspots stay aligned if the panel resizes.
 
 To run the demo locally:
 
@@ -37,6 +37,9 @@ Then open the local URL shown in your terminal (Vite default is usually `http://
 - Reusable `<heat-spot>` component with slot-based content
 - Built-in toggle icon (top-left) to show heat overlay
 - Configurable `toolbar` attribute: `simple` (default) or `hidden`
+- Tracking continues while the heatmap overlay is visible
+- Clicks and taps are sampled (weighted more heavily than moves)
+- Resize-safe hotspots: positions stay aligned when the element size changes
 
 ## Installation
 

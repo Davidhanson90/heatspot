@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   configureMouseHeatmap,
   getMouseHeatmapData,
-  hello,
   recordMousePosition,
   resetMouseHeatmap,
   startMouseTracking,
@@ -88,11 +87,5 @@ describe("mouse heatmap", () => {
 
     const heatmap = getMouseHeatmapData();
     expect(heatmap.hotspots.length).toBe(1);
-  });
-});
-
-describe("hello export", () => {
-  it("returns the expected greeting", () => {
-    expect(hello).toBe("hello");
   });
 });

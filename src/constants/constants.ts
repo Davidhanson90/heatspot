@@ -23,6 +23,9 @@ export const ELEMENT_TRACKER_CONFIG: HeatmapConfig = {
   maxHotspots: 450
 };
 
+/** How many samples a primary click/tap is worth relative to a move sample. */
+export const CLICK_SAMPLE_WEIGHT = 3;
+
 /**
  * Ordered heat palette from coolest to hottest.
  */

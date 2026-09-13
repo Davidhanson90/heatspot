@@ -20,8 +20,18 @@ function getDistanceSquared(aX: number, aY: number, bX: number, bY: number): num
   return dX * dX + dY * dY;
 }
 
+function normalizeWeight(weight: number): number {
+  if (!Number.isFinite(weight)) {
+    return 1;
+  }
+
+  return Math.max(1, Math.floor(weight));
+}
+
 /**
  * Stores and aggregates pointer samples into clustered hotspots.
+ * Positions are stored as normalized 0–1 coordinates and remapped to the
+ * current viewport when a snapshot is requested.
  */
 export class HeatmapTracker {
   private config: HeatmapConfig;
@@ -55,22 +65,40 @@ export class HeatmapTracker {
   }
 
   /**
-   * Records a pointer position and merges it into the nearest hotspot.
+   * Updates the viewport used to project stored hotspots into pixel space.
    */
-  recordPosition(x: number, y: number, viewport: ViewportSize): void {
+  updateViewport(viewport: ViewportSize): void {
     if (viewport.width <= 0 || viewport.height <= 0) {
       return;
     }
 
+    this.latestViewport = { width: viewport.width, height: viewport.height };
+  }
+
+  /**
+   * Records a pointer position and merges it into the nearest hotspot.
+   * Incoming `x`/`y` values are pixels; they are stored normalized to `viewport`.
+   * `weight` counts as multiple samples at the same point (used for clicks).
+   */
+  recordPosition(x: number, y: number, viewport: ViewportSize, weight = 1): void {
+    if (viewport.width <= 0 || viewport.height <= 0) {
+      return;
+    }
+
+    const sampleWeight = normalizeWeight(weight);
     const clampedX = clamp(x, 0, viewport.width);
     const clampedY = clamp(y, 0, viewport.height);
+    const normX = clampedX / viewport.width;
+    const normY = clampedY / viewport.height;
     const mergeRadiusSquared = this.config.mergeRadius * this.config.mergeRadius;
 
     let closest: HeatmapHotspot | null = null;
     let closestDistance = Number.POSITIVE_INFINITY;
 
     for (const hotspot of this.trackedHotspots) {
-      const distance = getDistanceSquared(clampedX, clampedY, hotspot.x, hotspot.y);
+      const pixelX = hotspot.x * viewport.width;
+      const pixelY = hotspot.y * viewport.height;
+      const distance = getDistanceSquared(clampedX, clampedY, pixelX, pixelY);
       if (distance <= mergeRadiusSquared && distance < closestDistance) {
         closest = hotspot;
         closestDistance = distance;
@@ -78,16 +106,16 @@ export class HeatmapTracker {
     }
 
     if (closest) {
-      const nextCount = closest.count + 1;
-      closest.x = (closest.x * closest.count + clampedX) / nextCount;
-      closest.y = (closest.y * closest.count + clampedY) / nextCount;
+      const nextCount = closest.count + sampleWeight;
+      closest.x = (closest.x * closest.count + normX * sampleWeight) / nextCount;
+      closest.y = (closest.y * closest.count + normY * sampleWeight) / nextCount;
       closest.count = nextCount;
     } else {
       this.trackedHotspots.push({
         id: `hs-${this.nextHotspotId++}`,
-        x: clampedX,
-        y: clampedY,
-        count: 1,
+        x: normX,
+        y: normY,
+        count: sampleWeight,
         intensity: 0
       });
     }
@@ -97,8 +125,8 @@ export class HeatmapTracker {
       this.trackedHotspots.shift();
     }
 
-    this.sampleCount += 1;
-    this.latestViewport = viewport;
+    this.sampleCount += sampleWeight;
+    this.latestViewport = { width: viewport.width, height: viewport.height };
 
     if (this.trackedSince === null) {
       this.trackedSince = Date.now();
@@ -117,6 +145,7 @@ export class HeatmapTracker {
 
   /**
    * Returns a snapshot suitable for rendering or analytics.
+   * Hotspot `x`/`y` values are pixels for the current viewport.
    */
   getSnapshot(): HeatmapSnapshot {
     let maxCount = 0;
@@ -127,9 +156,13 @@ export class HeatmapTracker {
       }
     }
 
+    const width = this.latestViewport.width;
+    const height = this.latestViewport.height;
     const hotspots = this.trackedHotspots
       .map((hotspot) => ({
         ...hotspot,
+        x: hotspot.x * width,
+        y: hotspot.y * height,
         intensity: maxCount === 0 ? 0 : hotspot.count / maxCount
       }))
       .sort((a, b) => b.count - a.count);

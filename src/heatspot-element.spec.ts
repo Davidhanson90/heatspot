@@ -226,7 +226,7 @@ describe("heat-spot component", () => {
     expect(element.toolbar).toBe("simple");
   });
 
-  it("does not record pointer samples while overlay is visible", async () => {
+  it("records pointer movement while overlay is visible", async () => {
     const requestFrame = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation(() => 1);
@@ -245,11 +245,23 @@ describe("heat-spot component", () => {
       expect(button).not.toBeNull();
       expect(surface).not.toBeNull();
 
+      vi.spyOn(surface as HTMLElement, "getBoundingClientRect").mockReturnValue({
+        x: 0,
+        y: 0,
+        left: 0,
+        top: 0,
+        right: 300,
+        bottom: 220,
+        width: 300,
+        height: 220,
+        toJSON: () => ({})
+      });
+
       button?.click();
       await element.updateComplete;
       surface?.dispatchEvent(new MouseEvent("pointermove", { bubbles: true, clientX: 10, clientY: 20 }));
 
-      expect(element.tracker.getSnapshot().totalSamples).toBe(0);
+      expect(element.tracker.getSnapshot().totalSamples).toBe(1);
     } finally {
       requestFrame.mockRestore();
       element.remove();
@@ -316,21 +328,18 @@ describe("heat-spot component", () => {
     expect(hotspot.y).toBe(100);
   });
 
-  it("starts the draw loop only once while visible and cancels it when hidden", async () => {
-    let currentFrame = 0;
+  it("schedules a single draw frame while visible and does not loop when idle", async () => {
+    const callbacks: Array<(time: number) => void> = [];
     const requestFrame = vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
-      currentFrame += 1;
-      if (currentFrame === 1) {
-        callback(16);
-      }
-      return currentFrame;
+      callbacks.push(callback);
+      return callbacks.length;
     });
     const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
 
     const element = document.createElement("heat-spot") as HTMLElement & {
       updateComplete: Promise<unknown>;
       heatmapVisible: boolean;
-      drawLoopId: number | null;
+      drawFrameId: number | null;
       drawHeatmap: () => void;
       updated: () => void;
     };
@@ -342,34 +351,69 @@ describe("heat-spot component", () => {
 
     element.heatmapVisible = true;
     element.updated();
-    const firstLoopId = element.drawLoopId;
-    expect(firstLoopId).not.toBeNull();
+    const firstFrameId = element.drawFrameId;
+    expect(firstFrameId).not.toBeNull();
+    expect(requestFrame).toHaveBeenCalledTimes(1);
 
     element.updated();
-    expect(element.drawLoopId).toBe(firstLoopId);
+    expect(element.drawFrameId).toBe(firstFrameId);
+    expect(requestFrame).toHaveBeenCalledTimes(1);
+
+    callbacks[0](16);
+    expect(drawHeatmapSpy).toHaveBeenCalledTimes(1);
+    expect(element.drawFrameId).toBeNull();
+    expect(requestFrame).toHaveBeenCalledTimes(1);
+
+    element.heatmapVisible = false;
+    element.updated();
+    expect(cancelFrame).not.toHaveBeenCalled();
+  });
+
+  it("cancels a pending draw frame when the overlay is hidden", async () => {
+    const requestFrame = vi.spyOn(window, "requestAnimationFrame").mockImplementation(() => 7);
+    const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      heatmapVisible: boolean;
+      drawFrameId: number | null;
+      updated: () => void;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    element.heatmapVisible = true;
+    element.updated();
+    expect(element.drawFrameId).toBe(7);
 
     element.heatmapVisible = false;
     element.updated();
 
-    expect(cancelFrame).toHaveBeenCalledTimes(1);
-    expect(drawHeatmapSpy).toHaveBeenCalled();
-    expect(requestFrame).toHaveBeenCalled();
+    expect(cancelFrame).toHaveBeenCalledWith(7);
+    expect(element.drawFrameId).toBeNull();
+    expect(requestFrame).toHaveBeenCalledTimes(1);
   });
 
-  it("stops draw loop when disconnected", async () => {
+  it("stops pending draw and resize observer when disconnected", async () => {
     const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    const disconnect = vi.fn();
 
     const element = document.createElement("heat-spot") as HTMLElement & {
-      drawLoopId: number | null;
+      drawFrameId: number | null;
+      resizeObserver: { disconnect: () => void } | null;
       disconnectedCallback: () => void;
     };
     document.body.appendChild(element);
 
-    element.drawLoopId = 123;
+    element.drawFrameId = 123;
+    element.resizeObserver = { disconnect };
     element.disconnectedCallback();
 
     expect(cancelFrame).toHaveBeenCalledWith(123);
-    expect(element.drawLoopId).toBeNull();
+    expect(element.drawFrameId).toBeNull();
+    expect(disconnect).toHaveBeenCalledTimes(1);
+    expect(element.resizeObserver).toBeNull();
   });
 
   it("returns early when drawHeatmap cannot access required render targets", async () => {
@@ -505,5 +549,287 @@ describe("heat-spot component", () => {
     expect(canvas.width).toBe(120);
     expect(canvas.height).toBe(90);
     expect(renderSpy).toHaveBeenCalledWith(context, 120, 90, expect.any(Array));
+  });
+
+  it("records a weighted sample on primary pointerdown", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      tracker: { getSnapshot: () => { totalSamples: number; hotspots: Array<{ count: number; x: number; y: number }> } };
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface");
+    expect(surface).not.toBeNull();
+
+    vi.spyOn(surface as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 220,
+      width: 300,
+      height: 220,
+      toJSON: () => ({})
+    });
+
+    surface?.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 0, clientX: 40, clientY: 35 }));
+
+    const snapshot = element.tracker.getSnapshot();
+    expect(snapshot.totalSamples).toBe(3);
+    expect(snapshot.hotspots[0].count).toBe(3);
+    expect(snapshot.hotspots[0].x).toBeCloseTo(40);
+    expect(snapshot.hotspots[0].y).toBeCloseTo(35);
+  });
+
+  it("ignores non-primary pointerdown samples", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      tracker: { getSnapshot: () => { totalSamples: number } };
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface");
+    expect(surface).not.toBeNull();
+
+    vi.spyOn(surface as HTMLElement, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 300,
+      bottom: 220,
+      width: 300,
+      height: 220,
+      toJSON: () => ({})
+    });
+
+    surface?.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, button: 2, clientX: 40, clientY: 35 }));
+
+    expect(element.tracker.getSnapshot().totalSamples).toBe(0);
+  });
+
+  it("remaps stored hotspots when the surface is resized", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      getHeatmapData: () => {
+        viewport: { width: number; height: number };
+        hotspots: Array<{ x: number; y: number }>;
+      };
+      onSurfaceResize: () => void;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface");
+    expect(surface).not.toBeNull();
+
+    const rect = {
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 200,
+      bottom: 100,
+      width: 200,
+      height: 100,
+      toJSON: () => ({})
+    };
+    const rectSpy = vi.spyOn(surface as HTMLElement, "getBoundingClientRect").mockReturnValue(rect);
+
+    surface?.dispatchEvent(new MouseEvent("pointermove", { bubbles: true, clientX: 50, clientY: 25 }));
+
+    rect.width = 400;
+    rect.height = 200;
+    rect.right = 400;
+    rect.bottom = 200;
+    rectSpy.mockReturnValue(rect);
+
+    element.onSurfaceResize();
+
+    const snapshot = element.getHeatmapData();
+    expect(snapshot.viewport).toEqual({ width: 400, height: 200 });
+    expect(snapshot.hotspots[0].x).toBeCloseTo(100);
+    expect(snapshot.hotspots[0].y).toBeCloseTo(50);
+  });
+
+  it("skips resize updates when the surface is missing or empty", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      renderRoot: ShadowRoot;
+      onSurfaceResize: () => void;
+      tracker: { getSnapshot: () => { viewport: { width: number; height: number } } };
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const querySpy = vi.spyOn(element.renderRoot, "querySelector").mockReturnValue(null);
+    element.onSurfaceResize();
+    querySpy.mockRestore();
+
+    const surface = element.shadowRoot?.querySelector<HTMLElement>(".surface") as HTMLElement;
+    vi.spyOn(surface, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 0,
+      bottom: 0,
+      width: 0,
+      height: 0,
+      toJSON: () => ({})
+    });
+
+    element.onSurfaceResize();
+    expect(element.tracker.getSnapshot().viewport).toEqual({ width: 0, height: 0 });
+  });
+
+  it("does not reschedule draw after the pending frame is cancelled", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      heatmapVisible: boolean;
+      drawFrameId: number | null;
+      cancelScheduledDraw: () => void;
+      scheduleDraw: () => void;
+    };
+
+    const cancelFrame = vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    element.cancelScheduledDraw();
+    expect(cancelFrame).not.toHaveBeenCalled();
+
+    element.heatmapVisible = false;
+    element.scheduleDraw();
+    expect(element.drawFrameId).toBeNull();
+  });
+
+  it("attaches a ResizeObserver and invokes resize handling from its callback", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      resizeObserver: { disconnect: () => void; observe: (target: Element) => void } | null;
+      ensureResizeObserver: () => void;
+      onSurfaceResize: () => void;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    element.resizeObserver?.disconnect();
+    element.resizeObserver = null;
+
+    let observerCb: () => void = () => undefined;
+    const observe = vi.fn();
+    const OriginalRO = globalThis.ResizeObserver;
+
+    class FakeResizeObserver {
+      constructor(callback: () => void) {
+        observerCb = callback;
+      }
+
+      observe = observe;
+      disconnect = vi.fn();
+      unobserve = vi.fn();
+    }
+
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+
+    try {
+      element.ensureResizeObserver();
+      expect(observe).toHaveBeenCalled();
+      expect(element.resizeObserver).not.toBeNull();
+
+      const resizeSpy = vi.spyOn(element, "onSurfaceResize").mockImplementation(() => {});
+      observerCb();
+      expect(resizeSpy).toHaveBeenCalledTimes(1);
+
+      const existing = element.resizeObserver;
+      element.ensureResizeObserver();
+      expect(element.resizeObserver).toBe(existing);
+    } finally {
+      vi.stubGlobal("ResizeObserver", OriginalRO);
+    }
+  });
+
+  it("skips ResizeObserver setup when the API is unavailable or the surface is missing", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      resizeObserver: { disconnect: () => void } | null;
+      ensureResizeObserver: () => void;
+      renderRoot: ShadowRoot;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const original = globalThis.ResizeObserver;
+    element.resizeObserver = null;
+    vi.stubGlobal("ResizeObserver", undefined);
+
+    try {
+      element.ensureResizeObserver();
+      expect(element.resizeObserver).toBeNull();
+    } finally {
+      vi.stubGlobal("ResizeObserver", original);
+    }
+
+    element.resizeObserver = null;
+    vi.spyOn(element.renderRoot, "querySelector").mockReturnValue(null);
+    element.ensureResizeObserver();
+    expect(element.resizeObserver).toBeNull();
+  });
+
+  it("skips drawing when a scheduled frame is no longer dirty or visible", async () => {
+    const frames: Array<(time: number) => void> = [];
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      heatmapVisible: boolean;
+      needsDraw: boolean;
+      scheduleDraw: () => void;
+      drawHeatmap: () => void;
+    };
+
+    document.body.appendChild(element);
+    await element.updateComplete;
+
+    const drawSpy = vi.spyOn(element, "drawHeatmap").mockImplementation(() => {});
+
+    element.heatmapVisible = true;
+    element.needsDraw = false;
+    element.scheduleDraw();
+    frames.at(-1)?.(16);
+    expect(drawSpy).not.toHaveBeenCalled();
+
+    element.heatmapVisible = true;
+    element.needsDraw = true;
+    element.scheduleDraw();
+    element.heatmapVisible = false;
+    frames.at(-1)?.(16);
+    expect(drawSpy).not.toHaveBeenCalled();
+  });
+
+  it("does not reconnect a resize observer after the element is disconnected", async () => {
+    const element = document.createElement("heat-spot") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+      resizeObserver: { disconnect: () => void } | null;
+    };
+
+    document.body.appendChild(element);
+    const pending = element.updateComplete;
+    element.remove();
+    await pending;
+    expect(element.resizeObserver).toBeNull();
   });
 });
