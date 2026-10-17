@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   configureMouseHeatmap,
   getMouseHeatmapData,
-  hello,
   recordMousePosition,
   resetMouseHeatmap,
   startMouseTracking,
@@ -158,11 +157,5 @@ describe("mouse heatmap", () => {
         Object.assign(globalThis as { window?: unknown }, { window: previousWindow });
       }
     }
-  });
-});
-
-describe("hello export", () => {
-  it("returns the expected greeting", () => {
-    expect(hello).toBe("hello");
   });
 });

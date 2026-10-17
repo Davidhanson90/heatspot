@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Primary clicks and taps now record a weighted sample (3× a move sample) so discrete interactions show up on the heatmap.
+- `HeatmapTracker` stores hotspot positions as normalized 0–1 coordinates and remaps them to the current viewport, keeping blobs aligned after resize.
+- `<heat-spot>` observes its surface with `ResizeObserver` and redraws when the element size changes.
+
+### Changed
+
+- Pointer tracking continues while the heatmap overlay is visible.
+- Overlay rendering uses a dirty flag and a single `requestAnimationFrame` instead of a continuous draw loop.
+- Removed the leftover `hello` export.
+
 ## 0.2.3
 
 ### Added

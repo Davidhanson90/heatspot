@@ -5,8 +5,6 @@ import { DEFAULT_HEATMAP_CONFIG } from "./constants/constants.js";
 import { HeatSpotElement } from "./heatspot-element.js";
 import { type HeatmapConfig, type HeatmapSnapshot, type ViewportSize } from "./contracts/heatmap-contracts.js";
 
-export const hello = "hello";
-
 export { HeatSpotElement };
 export { DEFAULT_HEATMAP_CONFIG, HeatmapTracker };
 export type {
@@ -45,9 +43,10 @@ export function configureMouseHeatmap(nextConfig: Partial<HeatmapConfig>): void 
 export function recordMousePosition(
   x: number,
   y: number,
-  viewport = getViewportFromWindow()
+  viewport = getViewportFromWindow(),
+  weight = 1
 ): void {
-  globalTracker.recordPosition(x, y, viewport);
+  globalTracker.recordPosition(x, y, viewport, weight);
 }
 
 /**
